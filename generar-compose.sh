@@ -10,6 +10,8 @@ services:
       - LOGGING_LEVEL=DEBUG
     networks:
       - testing_net
+    volumes:
+      - ./server:/data_server
 " > $1
 
 for i in $(seq 1 $2); do
@@ -24,6 +26,8 @@ for i in $(seq 1 $2); do
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./client:/data_client
 " >> $1
 done
 
