@@ -9,10 +9,14 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self._clients_sockets = {}
 
     def _graceful_shutdown(self, signum, frame):
         self._server_socket.close()
         logging.info("action: close_server_socket | result: success")
+        for client_addr, client_sock in self._clients_sockets.items():
+            client_sock.close()
+            logging.info(f"action: close_client_socket | result: success | ip: {client_addr[0]}")
         logging.info("action: shutdown_server | result: success")
         sys.exit(0)
 
@@ -49,6 +53,7 @@ class Server:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
             client_sock.close()
+            del self._clients_sockets[client_sock.getpeername()]
 
     def __accept_new_connection(self):
         """
@@ -62,4 +67,5 @@ class Server:
         logging.info('action: accept_connections | result: in_progress')
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
+        self._clients_sockets[addr] = c
         return c
