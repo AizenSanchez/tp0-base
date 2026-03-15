@@ -15,7 +15,7 @@ class Server:
         self._server_socket.close()
         logging.info("action: close_server_socket | result: success")
         for client_addr, client_sock in self._clients_sockets.items():
-            client_sock.close()
+            client_sock.close()                
             logging.info(f"action: close_client_socket | result: success | ip: {client_addr[0]}")
         logging.info("action: shutdown_server | result: success")
         sys.exit(0)
@@ -52,8 +52,10 @@ class Server:
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
+            peername = client_sock.getpeername()
             client_sock.close()
-            del self._clients_sockets[client_sock.getpeername()]
+            del self._clients_sockets[peername]
+
 
     def __accept_new_connection(self):
         """
