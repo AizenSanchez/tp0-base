@@ -10,7 +10,7 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
 
-    def _graceful_shutdown(self):
+    def _graceful_shutdown(self, signum, frame):
         self._server_socket.close()
         logging.info("action: close_server_socket | result: success")
         logging.info("action: shutdown_server | result: success")
