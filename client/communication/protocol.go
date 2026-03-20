@@ -1,63 +1,46 @@
 package communication
 
-import "github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
+func (ProtocolHeader *ProtocolHeader) GetMessageType() uint8 {
+	return ProtocolHeader.messageType
+}
 
-func SerializeClientBet(clientBet common.ClientBet) []byte {
-	clientBetSerialized := make([]byte, 0)
-	clientBetSerialized = append(clientBetSerialized, SerializeClient(clientBet.GetClient())...)
-	clientBetSerialized = append(clientBetSerialized, SerializeUint64(uint64(clientBet.GetNumber()))...)
+func (ProtocolHeader *ProtocolHeader) GetMessageSize() uint8 {
+	return ProtocolHeader.messageSize
+}
 
+func (protocolHeader *ProtocolHeader) SetMessageSize(size uint8) {
+	protocolHeader.messageSize = size
+}
+func (ProtocolModel *ProtocolModel) GetHeader() ProtocolHeader {
+	return ProtocolModel.header
+}
+
+func (ProtocolModel *ProtocolModel) GetBody() ProtocolBody {
+	return ProtocolModel.body
+}
+func (protocolModel *ProtocolModel) Serialize() []byte {
 	result := make([]byte, 0)
-	result = append(result, []byte{byte(len(clientBetSerialized))}...)
-	result = append(result, clientBetSerialized...)
+	bodySerialized := protocolModel.serializeBody()
+	protocolModel.header.SetMessageSize(uint8(len(bodySerialized)))
+	result = append(result, protocolModel.serializeHeader()...)
+	result = append(result, protocolModel.serializeBody()...)
 	return result
 }
 
-func SerializeClient(client common.Client) []byte {
-	clientSerialized := make([]byte, 0)
-	clientSerialized = append(clientSerialized, SerializeString(client.GetName())...)
-	clientSerialized = append(clientSerialized, SerializeString(client.GetLastName())...)
-	clientSerialized = append(clientSerialized, SerializeUint64(client.GetDni())...)
-	clientSerialized = append(clientSerialized, SerializeBirthDate(client.GetBirthDate())...)
-
-	result := make([]byte, 0)
-	result = append(result, []byte{byte(len(clientSerialized))}...)
-	result = append(result, clientSerialized...)
-	return result
+func (protocolModel *ProtocolModel) serializeHeader() []byte {
+	return protocolModel.header.Serialize()
 }
 
-func SerializeBirthDate(birthDate common.BirthDate) []byte {
-	dateSerialized := make([]byte, 0)
-	dateSerialized = append(dateSerialized, SerializeUint8(birthDate.GetDay())...)
-	dateSerialized = append(dateSerialized, SerializeUint8(birthDate.GetMonth())...)
-	dateSerialized = append(dateSerialized, SerializeUint64(uint64(birthDate.GetYear()))...)
-
-	result := make([]byte, 0)
-	result = append(result, []byte{byte(len(dateSerialized))}...)
-	result = append(result, dateSerialized...)
-	return result
+func (ProtocolHeader *ProtocolHeader) Serialize() []byte {
+	headerSerialized := make([]byte, 0)
+	headerSerialized = append(headerSerialized, SerializeUint8(ProtocolHeader.GetMessageType())...)
+	headerSerialized = append(headerSerialized, SerializeUint8(ProtocolHeader.GetMessageSize())...)
+	return headerSerialized
 }
 
-func SerializeString(str string) []byte {
-	strSerialized := []byte(str)
-	result := make([]byte, 0)
-	result = append(result, []byte{byte(len(strSerialized))}...)
-	result = append(result, strSerialized...)
-	return result
+func (protocolModel *ProtocolModel) serializeBody() []byte {
+	return protocolModel.body.Serialize()
 }
-
-func SerializeUint8(num uint8) []byte {
-	uint8Serialized := []byte{byte(num)}
-	result := make([]byte, 0)
-	result = append(result, []byte{byte(len(uint8Serialized))}...)
-	result = append(result, uint8Serialized...)
-	return result
-}
-
-func SerializeUint64(num uint64) []byte {
-	uint64Serialized := []byte{byte(num)}
-	result := make([]byte, 0)
-	result = append(result, []byte{byte(len(uint64Serialized))}...)
-	result = append(result, uint64Serialized...)
-	return result
+func (protocolBody *ProtocolBody) Serialize() []byte {
+	return SerializeClientBet(protocolBody.clientBet)
 }
