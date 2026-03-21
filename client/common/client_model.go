@@ -8,6 +8,18 @@ type BirthDate struct {
 	year  uint64
 }
 
+func (bd BirthDate) GetDay() uint8 {
+	return bd.day
+}
+
+func (bd BirthDate) GetMonth() uint8 {
+	return bd.month
+}
+
+func (bd BirthDate) GetYear() uint64 {
+	return bd.year
+}
+
 type Client struct {
 	name      string
 	lastName  string
@@ -34,6 +46,22 @@ func NewClient(name string, lastName string, dni string, birthDate string) (Clie
 	}, nil
 }
 
+func (c Client) GetName() string {
+	return c.name
+}
+
+func (c Client) GetLastName() string {
+	return c.lastName
+}
+
+func (c Client) GetDni() uint64 {
+	return c.dni
+}
+
+func (c Client) GetBirthDate() BirthDate {
+	return c.birthDate
+}
+
 type ClientBet struct {
 	client Client
 	number uint64
@@ -54,6 +82,14 @@ func NewClientBet(clientConfig ClientConfig) (ClientBet, error) {
 		client: client,
 		number: number,
 	}, nil
+}
+
+func (cb ClientBet) GetClient() Client {
+	return cb.client
+}
+
+func (cb ClientBet) GetNumber() uint64 {
+	return cb.number
 }
 
 type ClientConfig struct {

@@ -1,37 +1,24 @@
 package common
 
-func (c Client) GetName() string {
-	return c.name
+type ClientService struct {
+	clientBet ClientBet
 }
 
-func (c Client) GetLastName() string {
-	return c.lastName
+func NewClientService(clientBet ClientBet) ClientService {
+	return ClientService{
+		clientBet: clientBet,
+	}
 }
 
-func (c Client) GetDni() uint64 {
-	return c.dni
+func (clientService ClientService) GetClientBet() ClientBet {
+	return clientService.clientBet
 }
 
-func (c Client) GetBirthDate() BirthDate {
-	return c.birthDate
-}
-
-func (cb ClientBet) GetClient() Client {
-	return cb.client
-}
-
-func (cb ClientBet) GetNumber() uint64 {
-	return cb.number
-}
-
-func (bd BirthDate) GetDay() uint8 {
-	return bd.day
-}
-
-func (bd BirthDate) GetMonth() uint8 {
-	return bd.month
-}
-
-func (bd BirthDate) GetYear() uint64 {
-	return bd.year
+func (clientService ClientService) CreateClientBet(ClientConfig ClientConfig) (ClientBet, error) {
+	clientBet, err := NewClientBet(ClientConfig)
+	if err != nil {
+		return ClientBet{}, err
+	}
+	clientService.clientBet = clientBet
+	return clientBet, nil
 }
