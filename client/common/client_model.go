@@ -1,48 +1,26 @@
 package common
 
-import "strconv"
-
-type BirthDate struct {
-	day   uint8
-	month uint8
-	year  uint64
-}
-
-func (bd BirthDate) GetDay() uint8 {
-	return bd.day
-}
-
-func (bd BirthDate) GetMonth() uint8 {
-	return bd.month
-}
-
-func (bd BirthDate) GetYear() uint64 {
-	return bd.year
-}
-
 type Client struct {
 	name      string
 	lastName  string
-	dni       uint64
-	birthDate BirthDate
+	dni       string
+	birthDate string
 }
 
 func NewClient(name string, lastName string, dni string, birthDate string) (Client, error) {
-	dniUint, err := strconv.ParseUint(dni, 10, 64)
-	if err != nil {
+	if err := ValidateDNI(dni); err != nil {
 		return Client{}, err
 	}
 
-	birthDateObj, err := BirthDateFromString(birthDate)
-	if err != nil {
+	if err := ValidateBirthDate(birthDate); err != nil {
 		return Client{}, err
 	}
 
 	return Client{
 		name:      name,
 		lastName:  lastName,
-		dni:       dniUint,
-		birthDate: birthDateObj,
+		dni:       dni,
+		birthDate: birthDate,
 	}, nil
 }
 
@@ -54,17 +32,17 @@ func (c Client) GetLastName() string {
 	return c.lastName
 }
 
-func (c Client) GetDni() uint64 {
+func (c Client) GetDni() string {
 	return c.dni
 }
 
-func (c Client) GetBirthDate() BirthDate {
+func (c Client) GetBirthDate() string {
 	return c.birthDate
 }
 
 type ClientBet struct {
 	client Client
-	number uint64
+	number string
 }
 
 func NewClientBet(clientConfig ClientConfig) (ClientBet, error) {
@@ -73,14 +51,13 @@ func NewClientBet(clientConfig ClientConfig) (ClientBet, error) {
 		return ClientBet{}, err
 	}
 
-	number, err := strconv.ParseUint(clientConfig.number, 10, 64)
-	if err != nil {
+	if err := ValidateBetNumber(clientConfig.number); err != nil {
 		return ClientBet{}, err
 	}
 
 	return ClientBet{
 		client: client,
-		number: number,
+		number: clientConfig.number,
 	}, nil
 }
 
@@ -88,7 +65,7 @@ func (cb ClientBet) GetClient() Client {
 	return cb.client
 }
 
-func (cb ClientBet) GetNumber() uint64 {
+func (cb ClientBet) GetNumber() string {
 	return cb.number
 }
 
