@@ -99,3 +99,13 @@ type ClientConfig struct {
 	birthDate string
 	number    string
 }
+
+func NewClientConfig(name string, lastName string, dni string, birthDate string, number string) ClientConfig {
+	return ClientConfig{
+		name:      name,
+		lastName:  lastName,
+		dni:       dni,
+		birthDate: birthDate,
+		number:    number,
+	}
+}
