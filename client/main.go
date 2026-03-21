@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/communication"
 )
 
 var log = logging.MustGetLogger("log")
@@ -36,10 +37,12 @@ func InitConfig() (*viper.Viper, error) {
 	// Add env variables supported
 	v.BindEnv("id")
 	v.BindEnv("server", "address")
-	v.BindEnv("loop", "period")
-	v.BindEnv("loop", "amount")
 	v.BindEnv("log", "level")
-
+	v.BindEnv("NOMBRE")
+	v.BindEnv("APELLIDO")
+	v.BindEnv("DNI")
+	v.BindEnv("NACIMIENTO")
+	v.BindEnv("NUMERO")
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
 	// can be loaded from the environment variables so we shouldn't
@@ -83,11 +86,14 @@ func InitLogger(logLevel string) error {
 // PrintConfig Print all the configuration parameters of the program.
 // For debugging purposes only
 func PrintConfig(v *viper.Viper) {
-	log.Infof("action: config | result: success | client_id: %s | server_address: %s | loop_amount: %v | loop_period: %v | log_level: %s",
+	log.Infof("action: config | result: success | client_id: %s | server_address: %s | client_name: %s | client_lastname: %s | client_dni: %s | client_birthdate: %s | client_bet_number: %s | log_level: %s",
 		v.GetString("id"),
 		v.GetString("server.address"),
-		v.GetInt("loop.amount"),
-		v.GetDuration("loop.period"),
+		v.GetString("NOMBRE"),
+		v.GetString("APELLIDO"),
+		v.GetString("DNI"),
+		v.GetString("NACIMIENTO"),
+		v.GetString("NUMERO"),
 		v.GetString("log.level"),
 	)
 }
@@ -105,14 +111,21 @@ func main() {
 	// Print program config with debugging purposes
 	PrintConfig(v)
 
-	clientConfig := common.ClientConfig{
-		ServerAddress: v.GetString("server.address"),
-		ID:            v.GetString("id"),
-		LoopAmount:    v.GetInt("loop.amount"),
-		LoopPeriod:    v.GetDuration("loop.period"),
+	clientConfig := common.NewClientConfig(
+		v.GetString("NOMBRE"),
+		v.GetString("APELLIDO"),
+		v.GetString("DNI"),
+		v.GetString("NACIMIENTO"),
+		v.GetString("NUMERO"),
+	)
+
+	clientService := common.NewClientService(common.ClientBet{})
+	_, err = clientService.CreateClientBet(clientConfig)
+	if err != nil {
+		log.Criticalf("%s", err)
 	}
 
-	client := common.NewClient(clientConfig)
+	clientController := common.NewClientController(clientService)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM)
@@ -121,5 +134,39 @@ func main() {
 		<-sigChan
 		close(stop)
 	}()
-	client.StartClientLoop(stop)
+
+	connection, err := communication.NewConnection(v.GetString("server.address"), v.GetString("id"))
+	if err != nil {
+		log.Criticalf("%s", err)
+	}
+
+	registerBet(clientController, connection, v.GetString("id"))
+	connection.Close()
+}
+
+func registerBet(clientController common.ClientController, connection *communication.Connection, clientID string) {
+	protocolFrame := communication.NewProtocolFrameRequestRegisterBet(clientController.GetClientBet())
+	if err := connection.SendMessage(protocolFrame); err != nil {
+		log.Criticalf("%s", err)
+	}
+	protocolFrameResponse, err := connection.ReceiveMessage()
+	if err != nil {
+		log.Criticalf("%s", err)
+	}
+	log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
+		clientID,
+		protocolFrameResponse,
+	)
+
+	if protocolFrameResponse.GetMessageType() == 2 {
+		log.Infof("action: apuesta_enviada | result: success | dni: %v| numero: %v",
+			clientController.GetClientDNI(),
+			clientController.GetClientBetNumber(),
+		)
+	} else if protocolFrameResponse.GetMessageType() == 3 {
+		log.Infof("action: apuesta_enviada | result: fail | dni: %v| numero: %v",
+			clientController.GetClientDNI(),
+			clientController.GetClientBetNumber())
+	}
+
 }
