@@ -94,10 +94,12 @@ func main() {
 	v, err := InitConfig()
 	if err != nil {
 		log.Criticalf("%s", err)
+		os.Exit(1)
 	}
 
 	if err := InitLogger(v.GetString("log.level")); err != nil {
 		log.Criticalf("%s", err)
+		os.Exit(1)
 	}
 
 	// Print program config with debugging purposes
@@ -115,7 +117,7 @@ func main() {
 	_, err = clientService.CreateClientBet(clientConfig)
 	if err != nil {
 		log.Criticalf("%s", err)
-		return
+		os.Exit(1)
 	}
 
 	clientController := common.NewClientController(clientService)
@@ -131,7 +133,7 @@ func main() {
 	connection, err := communication.NewConnection(v.GetString("server.address"), v.GetString("id"))
 	if err != nil {
 		log.Criticalf("%s", err)
-		return
+		os.Exit(1)
 	}
 
 	registerBet(clientController, connection, v.GetString("id"))
