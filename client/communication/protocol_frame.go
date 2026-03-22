@@ -31,7 +31,7 @@ func (protocolFrame *ProtocolFrame) Serialize() []byte {
 	bodySerialized := protocolFrame.serializeBody()
 	protocolFrame.header.SetMessageSize(uint8(len(bodySerialized)))
 	result = append(result, protocolFrame.serializeHeader()...)
-	result = append(result, protocolFrame.serializeBody()...)
+	result = append(result, bodySerialized...)
 	return result
 }
 

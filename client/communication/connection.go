@@ -21,6 +21,7 @@ func NewConnection(serverAddress string, clientId string) (*Connection, error) {
 			serverAddress,
 			err,
 		)
+		return nil, err
 	}
 	return &Connection{
 		conn: conn,

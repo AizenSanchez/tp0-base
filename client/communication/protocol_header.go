@@ -20,10 +20,7 @@ func (protocolHeader *ProtocolHeader) SetMessageSize(size uint8) {
 }
 
 func (protocolHeader *ProtocolHeader) Serialize() []byte {
-	headerSerialized := make([]byte, 0)
-	headerSerialized = append(headerSerialized, SerializeUint8(protocolHeader.GetMessageType())...)
-	headerSerialized = append(headerSerialized, SerializeUint8(protocolHeader.GetMessageSize())...)
-	return headerSerialized
+	return []byte{protocolHeader.GetMessageType(), protocolHeader.GetMessageSize()}
 }
 
 func DeserializeHeader(headerBytes []byte) (ProtocolHeader, error) {
