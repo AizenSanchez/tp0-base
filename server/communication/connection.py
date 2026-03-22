@@ -11,7 +11,7 @@ class ServerConnection:
     def __init__(self, port, listen_backlog):
         signal.signal(signal.SIGTERM, self._graceful_shutdown)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind('', port)
+        self.socket.bind(('', port))
         self.socket.listen(listen_backlog)
         self.clients_sockets = {}
 
