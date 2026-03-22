@@ -20,6 +20,11 @@ for i in $(seq 1 $2); do
     entrypoint: /client
     environment:
       - CLI_ID=$i
+      - NOMBRE=Aizen
+      - APELLIDO=Sanchez
+      - DNI=12345678
+      - NACIMIENTO=2001-01-01
+      - NUMERO=7
     networks:
       - testing_net
     depends_on:
