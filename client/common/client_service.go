@@ -14,7 +14,7 @@ func (clientService ClientService) GetClientBet() ClientBet {
 	return clientService.clientBet
 }
 
-func (clientService ClientService) CreateClientBet(ClientConfig ClientConfig) (ClientBet, error) {
+func (clientService *ClientService) CreateClientBet(ClientConfig ClientConfig) (ClientBet, error) {
 	clientBet, err := NewClientBet(ClientConfig)
 	if err != nil {
 		return ClientBet{}, err

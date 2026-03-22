@@ -18,14 +18,6 @@ func SerializeUint8(num uint8) []byte {
 	return result
 }
 
-func SerializeUint64(num uint64) []byte {
-	uint64Serialized := []byte{byte(num)}
-	result := make([]byte, 0)
-	result = append(result, []byte{byte(len(uint64Serialized))}...)
-	result = append(result, uint64Serialized...)
-	return result
-}
-
 func SerializeClientBet(clientBet common.ClientBet) []byte {
 	clientBetSerialized := make([]byte, 0)
 	clientBetSerialized = append(clientBetSerialized, SerializeClient(clientBet.GetClient())...)
