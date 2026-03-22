@@ -9,7 +9,7 @@ class ServerRouter:
     def route(self, protocol_frame: ProtocolFrame) -> ProtocolFrame:
         message_type = protocol_frame.GetMessageType()
         if message_type == 1:
-            bet =self.server_controller.register_bet(protocol_frame.body)
+            bet = self.server_controller.register_bet(protocol_frame.body.bet)
             if not bet:
                 logging.error(f"action: apuesta_almacenada | result: failure ")
                 return ProtocolFrame.NewProtocolFrameError()
