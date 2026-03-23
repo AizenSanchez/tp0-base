@@ -72,7 +72,7 @@ func (connection *Connection) ReceiveMessage() (ProtocolFrame, error) {
 }
 
 func readHeader(conn net.Conn) (ProtocolHeader, error) {
-	headerBytes := make([]byte, 2)
+	headerBytes := make([]byte, 3)
 	bytesRead, err := conn.Read(headerBytes)
 	if err != nil {
 		log.Errorf(
@@ -105,7 +105,7 @@ func readHeader(conn net.Conn) (ProtocolHeader, error) {
 	return protocolHeader, nil
 }
 
-func readBody(conn net.Conn, bodySize uint8) ([]byte, error) {
+func readBody(conn net.Conn, bodySize uint16) ([]byte, error) {
 	bodyBytes := make([]byte, bodySize)
 	bytesRead, err := conn.Read(bodyBytes)
 	if err != nil {

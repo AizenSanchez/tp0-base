@@ -1,8 +1,8 @@
 package communication
 
 const (
-	PROTOCOL_HEADER_SIZE = 2
-	PROTOCOL_BODY_SIZE   = 7998
+	PROTOCOL_HEADER_SIZE = 3
+	PROTOCOL_BODY_SIZE   = 8000
 )
 
 type ProtocolFrame struct {
@@ -40,7 +40,7 @@ func (protocolFrame *ProtocolFrame) GetBody() []byte {
 func (protocolFrame *ProtocolFrame) Serialize() []byte {
 	result := make([]byte, 0)
 	bodySerialized := protocolFrame.serializeBody()
-	protocolFrame.header.SetMessageSize(uint8(len(bodySerialized)))
+	protocolFrame.header.SetMessageSize(uint16(len(bodySerialized)))
 	result = append(result, protocolFrame.serializeHeader()...)
 	result = append(result, bodySerialized...)
 	return result
