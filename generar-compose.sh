@@ -31,6 +31,7 @@ for i in $(seq 1 $2); do
       - server
     volumes:
       - ./client:/data_client
+      - ./.data:/data
 " >> $1
 done
 
