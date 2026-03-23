@@ -6,3 +6,6 @@ class ServerController:
     
     def register_bet(self, bet):
         return self.server_service.register_bet(bet)
+    
+    def register_batch_bets(self, bets):
+        return self.server_service.register_batch_bets(bets)
