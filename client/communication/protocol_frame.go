@@ -1,10 +1,5 @@
 package communication
 
-const (
-	PROTOCOL_HEADER_SIZE = 3
-	PROTOCOL_BODY_SIZE   = 8000
-)
-
 type ProtocolFrame struct {
 	header ProtocolHeader
 	body   []byte

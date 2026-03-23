@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+const HEADER_SIZE = 3
+
 type ProtocolHeader struct {
 	messageType uint8
 	messageSize uint16
@@ -32,11 +34,11 @@ func (protocolHeader *ProtocolHeader) Serialize() []byte {
 }
 
 func DeserializeHeader(headerBytes []byte) (ProtocolHeader, error) {
-	if len(headerBytes) != 3 {
-		return ProtocolHeader{}, fmt.Errorf("invalid header size: expected 3 bytes, got %d bytes", len(headerBytes))
+	if len(headerBytes) != HEADER_SIZE {
+		return ProtocolHeader{}, fmt.Errorf("invalid header size: expected %d bytes, got %d bytes", HEADER_SIZE, len(headerBytes))
 	}
 	messageType := headerBytes[0]
-	messageSize := binary.BigEndian.Uint16(headerBytes[1:3])
+	messageSize := binary.BigEndian.Uint16(headerBytes[1:HEADER_SIZE])
 	return ProtocolHeader{
 		messageType: messageType,
 		messageSize: messageSize,
