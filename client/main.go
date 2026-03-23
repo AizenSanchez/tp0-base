@@ -10,8 +10,7 @@ import (
 	"github.com/op/go-logging"
 	"github.com/spf13/viper"
 
-	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
-	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/communication"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/agency"
 )
 
 var log = logging.MustGetLogger("log")
@@ -35,12 +34,8 @@ func InitConfig() (*viper.Viper, error) {
 	// Add env variables supported
 	v.BindEnv("id")
 	v.BindEnv("server", "address")
+	v.BindEnv("batch", "maxAmount")
 	v.BindEnv("log", "level")
-	v.BindEnv("nombre", "NOMBRE")
-	v.BindEnv("apellido", "APELLIDO")
-	v.BindEnv("dni", "DNI")
-	v.BindEnv("nacimiento", "NACIMIENTO")
-	v.BindEnv("numero", "NUMERO")
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
 	// can be loaded from the environment variables so we shouldn't
@@ -78,14 +73,9 @@ func InitLogger(logLevel string) error {
 // PrintConfig Print all the configuration parameters of the program.
 // For debugging purposes only
 func PrintConfig(v *viper.Viper) {
-	log.Infof("action: config | result: success | client_id: %s | server_address: %s | client_name: %s | client_lastname: %s | client_dni: %s | client_birthdate: %s | client_bet_number: %s | log_level: %s",
+	log.Infof("action: config | result: success | client_id: %s | server_address: %s | log_level: %s",
 		v.GetString("id"),
 		v.GetString("server.address"),
-		v.GetString("nombre"),
-		v.GetString("apellido"),
-		v.GetString("dni"),
-		v.GetString("nacimiento"),
-		v.GetString("numero"),
 		v.GetString("log.level"),
 	)
 }
@@ -105,23 +95,6 @@ func main() {
 	// Print program config with debugging purposes
 	PrintConfig(v)
 
-	clientConfig := common.NewClientConfig(
-		v.GetString("nombre"),
-		v.GetString("apellido"),
-		v.GetString("dni"),
-		v.GetString("nacimiento"),
-		v.GetString("numero"),
-	)
-
-	clientService := common.NewClientService(common.ClientBet{})
-	_, err = clientService.CreateClientBet(clientConfig)
-	if err != nil {
-		log.Criticalf("%s", err)
-		os.Exit(1)
-	}
-
-	clientController := common.NewClientController(clientService)
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM)
 	stop := make(chan struct{})
@@ -130,38 +103,14 @@ func main() {
 		close(stop)
 	}()
 
-	connection, err := communication.NewConnection(v.GetString("server.address"), v.GetString("id"))
+	agencyClient, err := agency.NewAgencyClient(v.GetString("id"), v.GetInt("batch.maxAmount"), v.GetString("server.address"), stop)
 	if err != nil {
 		log.Criticalf("%s", err)
 		os.Exit(1)
 	}
 
-	registerBet(clientController, connection, v.GetString("id"))
-	connection.Close()
-	os.Exit(0)
-}
-
-func registerBet(clientController common.ClientController, connection *communication.Connection, clientID string) {
-	protocolFrame := communication.NewProtocolFrameRequestRegisterBet(clientController.GetClientBet())
-	if err := connection.SendMessage(protocolFrame); err != nil {
+	if err := agencyClient.RegisterBets(); err != nil {
 		log.Criticalf("%s", err)
-		return
+		os.Exit(1)
 	}
-	protocolFrameResponse, err := connection.ReceiveMessage()
-	if err != nil {
-		log.Criticalf("%s", err)
-		return
-	}
-
-	if protocolFrameResponse.GetMessageType() == 2 {
-		log.Infof("action: apuesta_enviada | result: success | dni: %v| numero: %v",
-			clientController.GetClientDNI(),
-			clientController.GetClientBetNumber(),
-		)
-	} else if protocolFrameResponse.GetMessageType() == 3 {
-		log.Infof("action: apuesta_enviada | result: fail | dni: %v| numero: %v",
-			clientController.GetClientDNI(),
-			clientController.GetClientBetNumber())
-	}
-
 }
