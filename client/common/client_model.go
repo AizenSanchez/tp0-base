@@ -86,3 +86,13 @@ func NewClientConfig(name string, lastName string, dni string, birthDate string,
 		number:    number,
 	}
 }
+
+func NewClientConfigFromList(clientConfigList []string) ClientConfig {
+	return ClientConfig{
+		name:      clientConfigList[0],
+		lastName:  clientConfigList[1],
+		dni:       clientConfigList[2],
+		birthDate: clientConfigList[3],
+		number:    clientConfigList[4],
+	}
+}

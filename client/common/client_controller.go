@@ -10,17 +10,10 @@ func NewClientController(clientService ClientService) ClientController {
 	}
 }
 
-func (clientController ClientController) GetClientBet() ClientBet {
-	return clientController.clientService.GetClientBet()
-}
-
-func (clientController ClientController) GetClientDNI() string {
-	clientBet := clientController.clientService.GetClientBet()
-	client := clientBet.GetClient()
-	return client.GetDni()
-}
-
-func (clientController ClientController) GetClientBetNumber() string {
-	clientBet := clientController.clientService.GetClientBet()
-	return clientBet.GetNumber()
+func (clientController *ClientController) CreateClientBet(ClientConfig ClientConfig) (ClientBet, error) {
+	clientBet, err := clientController.clientService.CreateClientBet(ClientConfig)
+	if err != nil {
+		return ClientBet{}, err
+	}
+	return clientBet, nil
 }
