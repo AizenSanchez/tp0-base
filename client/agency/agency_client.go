@@ -71,6 +71,7 @@ func (agencyClient *AgencyClient) RegisterBets() error {
 				batchSize)
 		}
 	}
+	agencyClient.CloseConnection()
 	return nil
 }
 
