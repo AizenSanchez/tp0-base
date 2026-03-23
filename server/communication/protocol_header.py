@@ -12,8 +12,8 @@ class ProtocolHeader:
     
     def ProtocolHeaderFromBytes(bytes):
         message_type = bytes[0]
-        message_size = bytes[1]
+        message_size = int.from_bytes(bytes[1:3], byteorder='big')
         return ProtocolHeader(message_type, message_size)
     
     def serialize(self) -> bytes:
-        return bytes([self.message_type]) + bytes([self.message_size])
+        return bytes([self.message_type]) + self.message_size.to_bytes(2, byteorder='big')

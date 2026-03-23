@@ -20,7 +20,7 @@ class ProtocolBody:
             return ProtocolBody(bets)   
         logging.error(f"action: deserialize_protocol_body | result: failure | message_type: {message_type}")
 
-    def deserialize_client_bet(bytes):
+    def deserialize_client_bet(bytes) -> Bet:
         offset = 0
         client_bet_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
         offset += 1
@@ -36,7 +36,7 @@ class ProtocolBody:
         
         return Bet('0', name, lastname, dni, birthdate, number)
     
-    def deserialize_client(bytes):
+    def deserialize_client(bytes) -> tuple:
         offset =0
         name_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
         offset += 1
@@ -60,15 +60,16 @@ class ProtocolBody:
         return bytes()
     
 
-    def deserialize_batch_bets(bytes):
+    def deserialize_batch_bets(bytes) -> list[Bet]:
         offset = 0
         batch_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
+        logging.info(f"action: deserialize_batch_size | result: success | batch_size: {batch_size}")
         offset += 1
         bets = []
         for _ in range(batch_size):
             client_bet_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
+            client_bet = ProtocolBody.deserialize_client_bet(bytes[offset:offset+client_bet_size+1])
             offset += 1
-            client_bet = ProtocolBody.deserialize_client_bet(bytes[offset:offset+client_bet_size])
             offset += client_bet_size
             bets.append(client_bet)
         logging.info(f"action: deserialize_protocol_body | result: success | batch_size: {len(bets)}")

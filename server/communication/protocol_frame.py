@@ -8,8 +8,8 @@ class ProtocolFrame:
         self.body = body
     
     def ProtocolFrameFromBytes(bytes):
-        header = ProtocolHeader.ProtocolHeaderFromBytes(bytes[0:2])
-        body = ProtocolBody.ProtocolBodyFromBytes(bytes[2:2+header.GetMessageSize()], header.GetMessageType())
+        header = ProtocolHeader.ProtocolHeaderFromBytes(bytes[0:3])
+        body = ProtocolBody.ProtocolBodyFromBytes(header.GetMessageType(), bytes[3:3+header.GetMessageSize()] )
         return ProtocolFrame(header, body)
     
     def serialize(self) -> bytes:

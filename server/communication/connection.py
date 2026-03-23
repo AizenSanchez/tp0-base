@@ -5,7 +5,7 @@ import socket
 import sys
 import signal
 
-HEADER_SIZE = 2
+HEADER_SIZE = 3
 
 class ServerConnection:
     def __init__(self, port, listen_backlog):
