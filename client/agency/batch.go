@@ -46,7 +46,12 @@ func (batch *BatchBuilder) ReadBatch() ([]byte, int, error) {
 			return batch.buffer, batch.batchSize, err
 		}
 		if record == nil {
-			buffer := batch.buffer
+			buffer := make([]byte, 0)
+			if batch.batchSize == 0 {
+				return buffer, batch.batchSize, nil
+			}
+			buffer = append(buffer, byte(batch.batchSize))
+			buffer = append(buffer, batch.buffer...)
 			batch.buffer = make([]byte, 0)
 			batchSize := batch.batchSize
 			batch.batchSize = 0
@@ -72,7 +77,9 @@ func (batch *BatchBuilder) ReadBatch() ([]byte, int, error) {
 		batch.batchSize++
 	}
 
-	buffer := batch.buffer
+	buffer := make([]byte, 0)
+	buffer = append(buffer, byte(batch.batchSize))
+	buffer = append(buffer, batch.buffer...)
 	batch.buffer = make([]byte, 0)
 	batchSize := batch.batchSize
 	batch.batchSize = 0
