@@ -1,21 +1,32 @@
 package communication
 
-import "github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
+const (
+	PROTOCOL_HEADER_SIZE = 2
+	PROTOCOL_BODY_SIZE   = 7998
+)
 
 type ProtocolFrame struct {
 	header ProtocolHeader
-	body   ProtocolBody
+	body   []byte
 }
 
-func NewProtocolFrameRequestRegisterBet(clientBet common.ClientBet) ProtocolFrame {
+func NewProtocolFrameRequestRegisterBet(bodyBytes []byte) ProtocolFrame {
 	return ProtocolFrame{
 		header: ProtocolHeader{
 			messageType: 1,
 			messageSize: 0,
 		},
-		body: ProtocolBody{
-			clientBet: clientBet,
+		body: bodyBytes,
+	}
+}
+
+func NewProtocolFrameRequestRegisterBets(bodyBytes []byte) ProtocolFrame {
+	return ProtocolFrame{
+		header: ProtocolHeader{
+			messageType: 4,
+			messageSize: 0,
 		},
+		body: bodyBytes,
 	}
 }
 
@@ -23,7 +34,7 @@ func (protocolFrame *ProtocolFrame) GetHeader() ProtocolHeader {
 	return protocolFrame.header
 }
 
-func (protocolFrame *ProtocolFrame) GetBody() ProtocolBody {
+func (protocolFrame *ProtocolFrame) GetBody() []byte {
 	return protocolFrame.body
 }
 func (protocolFrame *ProtocolFrame) Serialize() []byte {
@@ -44,5 +55,5 @@ func (protocolFrame *ProtocolFrame) serializeHeader() []byte {
 }
 
 func (protocolFrame *ProtocolFrame) serializeBody() []byte {
-	return protocolFrame.body.Serialize()
+	return protocolFrame.body
 }

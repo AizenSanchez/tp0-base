@@ -12,7 +12,7 @@ type Connection struct {
 	conn net.Conn
 }
 
-func NewConnection(serverAddress string, clientId string) (*Connection, error) {
+func NewConnection(serverAddress string, clientId string) (Connection, error) {
 	conn, err := net.Dial("tcp", serverAddress)
 	if err != nil {
 		log.Criticalf(
@@ -21,9 +21,9 @@ func NewConnection(serverAddress string, clientId string) (*Connection, error) {
 			serverAddress,
 			err,
 		)
-		return nil, err
+		return Connection{}, err
 	}
-	return &Connection{
+	return Connection{
 		conn: conn,
 	}, nil
 }
@@ -105,7 +105,7 @@ func readHeader(conn net.Conn) (ProtocolHeader, error) {
 	return protocolHeader, nil
 }
 
-func readBody(conn net.Conn, bodySize uint8) (ProtocolBody, error) {
+func readBody(conn net.Conn, bodySize uint8) ([]byte, error) {
 	bodyBytes := make([]byte, bodySize)
 	bytesRead, err := conn.Read(bodyBytes)
 	if err != nil {
@@ -113,7 +113,7 @@ func readBody(conn net.Conn, bodySize uint8) (ProtocolBody, error) {
 			"action: read_body | result: fail | error: %v",
 			err,
 		)
-		return ProtocolBody{}, err
+		return []byte{}, err
 	}
 	if bytesRead != len(bodyBytes) {
 		log.Errorf(
@@ -121,21 +121,13 @@ func readBody(conn net.Conn, bodySize uint8) (ProtocolBody, error) {
 			bytesRead,
 			len(bodyBytes),
 		)
-		return ProtocolBody{}, err
+		return []byte{}, err
 	}
 	log.Infof(
 		"action: read_body | result: success | bytes_read: %v",
 		bytesRead,
 	)
-	protocolBody, err := DeserializeBody(bodyBytes)
-	if err != nil {
-		log.Errorf(
-			"action: receive_message | result: fail | error: %v",
-			err,
-		)
-		return ProtocolBody{}, err
-	}
-	return protocolBody, nil
+	return bodyBytes, nil
 }
 
 func (connection *Connection) Close() error {
