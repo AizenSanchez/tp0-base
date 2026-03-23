@@ -8,10 +8,19 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 class ProtocolBody:
-    def __init__(self, bet: Bet):
-        self.bet = bet
+    def __init__(self, data):
+        self.data = data
     
-    def ProtocolBodyFromBytes(bytes):
+    def ProtocolBodyFromBytes(message_type,bytes):
+        if message_type == 1:
+            bet = ProtocolBody.deserialize_client_bet(bytes)
+            return ProtocolBody(bet)
+        if message_type == 4:
+            bets = ProtocolBody.deserialize_batch_bets(bytes)
+            return ProtocolBody(bets)   
+        logging.error(f"action: deserialize_protocol_body | result: failure | message_type: {message_type}")
+
+    def deserialize_client_bet(bytes):
         offset = 0
         client_bet_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
         offset += 1
@@ -24,8 +33,9 @@ class ProtocolBody:
         offset += 1
         number = bytes[offset:offset+number_size].decode('utf-8')
         logging.info(f"action: deserialize_protocol_body | result: success | name: {name} | lastname: {lastname} | dni: {dni} | birthdate: {birthdate} | number: {number}")
-        return ProtocolBody(Bet('0', name, lastname, dni, birthdate, number))
-
+        
+        return Bet('0', name, lastname, dni, birthdate, number)
+    
     def deserialize_client(bytes):
         offset =0
         name_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
@@ -48,3 +58,18 @@ class ProtocolBody:
     
     def serialize(self) -> bytes:
         return bytes()
+    
+
+    def deserialize_batch_bets(bytes):
+        offset = 0
+        batch_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
+        offset += 1
+        bets = []
+        for _ in range(batch_size):
+            client_bet_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
+            offset += 1
+            client_bet = ProtocolBody.deserialize_client_bet(bytes[offset:offset+client_bet_size])
+            offset += client_bet_size
+            bets.append(client_bet)
+        logging.info(f"action: deserialize_protocol_body | result: success | batch_size: {len(bets)}")
+        return bets
