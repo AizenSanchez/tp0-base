@@ -43,21 +43,22 @@ func (batch *BatchBuilder) ReadBatch() ([]byte, int, error) {
 	for batch.batchSize < batch.maxBatchSize {
 		record, err := batch.csvReader.Read()
 		if err != nil {
+			if err.Error() == "EOF" {
+				buffer := make([]byte, 0)
+				if batch.batchSize == 0 {
+					return buffer, batch.batchSize, nil
+				}
+				buffer = append(buffer, byte(batch.batchSize))
+				buffer = append(buffer, batch.buffer...)
+				batch.buffer = make([]byte, 0)
+				batchSize := batch.batchSize
+				batch.batchSize = 0
+				return buffer, batchSize, nil
+			}
+
+			log.Errorf("action: read_csv | result: failure | error: %s", err.Error())
 			return batch.buffer, batch.batchSize, err
 		}
-		if record == nil {
-			buffer := make([]byte, 0)
-			if batch.batchSize == 0 {
-				return buffer, batch.batchSize, nil
-			}
-			buffer = append(buffer, byte(batch.batchSize))
-			buffer = append(buffer, batch.buffer...)
-			batch.buffer = make([]byte, 0)
-			batchSize := batch.batchSize
-			batch.batchSize = 0
-			return buffer, batchSize, nil
-		}
-
 		clientConfig := common.NewClientConfigFromList(record)
 		clientBet, err := batch.clientController.CreateClientBet(clientConfig)
 		if err != nil {
@@ -67,6 +68,7 @@ func (batch *BatchBuilder) ReadBatch() ([]byte, int, error) {
 		if len(batch.buffer)+len(clientBetBytes) > batch.maxBufferSize {
 			buffer := make([]byte, 0)
 			buffer = append(buffer, byte(batch.batchSize))
+			buffer = append(buffer, batch.buffer...)
 			batch.buffer = clientBetBytes
 			batchSize := batch.batchSize
 			batch.batchSize = 1

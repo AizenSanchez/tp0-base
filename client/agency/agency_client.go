@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	FILE_PATH = ".data/agency-%s.csv"
+	FILE_PATH = "/data/agency-%s.csv"
 )
 
 var log = logging.MustGetLogger("log")
