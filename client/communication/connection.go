@@ -74,7 +74,7 @@ func (connection *Connection) ReceiveMessage() (ProtocolFrame, error) {
 func readHeader(conn net.Conn) (ProtocolHeader, error) {
 	headerBytes := make([]byte, 3)
 	bytesRead, err := conn.Read(headerBytes)
-	if err != nil {
+	if err != nil && err.Error() != "EOF" {
 		log.Errorf(
 			"action: read_header | result: fail | error: %v",
 			err,
