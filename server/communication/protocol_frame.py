@@ -1,7 +1,6 @@
 from .protocol_header import ProtocolHeader
 from .protocol_body import ProtocolBody
 
-
 class ProtocolFrame:
     def __init__(self, header: ProtocolHeader, body: ProtocolBody):
         self.header = header
@@ -14,7 +13,7 @@ class ProtocolFrame:
     
     def serialize(self) -> bytes:
         header_bytes =self.header.serialize()
-        body_bytes = self.body.serialize()
+        body_bytes = self.body.serialize(self.header.GetMessageType())
         return header_bytes + body_bytes
     
     def NewProtocolFrameError():
@@ -23,5 +22,11 @@ class ProtocolFrame:
     def NewProtocolFrameRegisterSuccess():
         return ProtocolFrame(ProtocolHeader(2, 0), ProtocolBody(None))
     
+    def NewProtocolFrameAskForWinnersSuccess(winners: list):
+        return ProtocolFrame(ProtocolHeader(6, 0), ProtocolBody(winners))
+    
+    def NewProtocolFrameAskForWinnersWait():
+        return ProtocolFrame(ProtocolHeader(7, 0), ProtocolBody(None))
+
     def GetMessageType(self):
         return self.header.GetMessageType()

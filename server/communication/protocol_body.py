@@ -13,14 +13,15 @@ class ProtocolBody:
     
     def ProtocolBodyFromBytes(message_type,bytes):
         if message_type == 1:
-            bet = ProtocolBody.deserialize_client_bet(bytes)
+            agency_id = int.from_bytes(bytes[0:1], byteorder='big')
+            bet = ProtocolBody.deserialize_client_bet(bytes, agency_id)
             return ProtocolBody(bet)
         if message_type == 4:
             bets = ProtocolBody.deserialize_batch_bets(bytes)
             return ProtocolBody(bets)   
         logging.error(f"action: deserialize_protocol_body | result: failure | message_type: {message_type}")
 
-    def deserialize_client_bet(bytes) -> Bet:
+    def deserialize_client_bet(bytes, agency_id) -> Bet:
         offset = 0
         client_bet_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
         offset += 1
@@ -34,8 +35,8 @@ class ProtocolBody:
         number = bytes[offset:offset+number_size].decode('utf-8')
         logging.info(f"action: deserialize_protocol_body | result: success | name: {name} | lastname: {lastname} | dni: {dni} | birthdate: {birthdate} | number: {number}")
         
-        return Bet('0', name, lastname, dni, birthdate, number)
-    
+        return Bet(str(agency_id), name, lastname, dni, birthdate, number)
+
     def deserialize_client(bytes) -> tuple:
         offset =0
         name_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
@@ -56,19 +57,40 @@ class ProtocolBody:
         offset += birthdate_size
         return name, lastname, dni, birthdate
     
-    def serialize(self) -> bytes:
+    def serialize(self, message_type: int) -> bytes:
+        if message_type == 6:
+            return self._serialize_winners()
         return bytes()
     
+    def _serialize_winners(self) -> bytes:
+        bytesToSend = len(self.data).to_bytes(1, byteorder='big')
+        for bet in self.data:
+            client_bet_bytes = self._serialize_client_bet(bet)
+            bytesToSend += len(client_bet_bytes).to_bytes(1, byteorder='big') + client_bet_bytes
+    
+    def _serialize_client_bet(self, bet: Bet) -> bytes:
+        bytesToSend = self._serialize_string(bet.first_name)
+        bytesToSend += self._serialize_string(bet.last_name)
+        bytesToSend += self._serialize_string(bet.document)
+        bytesToSend += self._serialize_string(bet.birthdate)
+        bytesToSend += self._serialize_string(bet.number)
+        return bytesToSend
 
+    def _serialize_string(self, string: str) -> bytes:
+        string_bytes = string.encode('utf-8')
+        return len(string_bytes).to_bytes(1, byteorder='big') + string_bytes
+    
     def deserialize_batch_bets(bytes) -> list[Bet]:
         offset = 0
+        agency_id = int.from_bytes(bytes[offset:offset+1], byteorder='big')
+        offset += 1
         batch_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
         logging.info(f"action: deserialize_batch_size | result: success | batch_size: {batch_size}")
         offset += 1
         bets = []
         for _ in range(batch_size):
             client_bet_size = int.from_bytes(bytes[offset:offset+1], byteorder='big')
-            client_bet = ProtocolBody.deserialize_client_bet(bytes[offset:offset+client_bet_size+1])
+            client_bet = ProtocolBody.deserialize_client_bet(bytes[offset:offset+client_bet_size+1], agency_id)
             offset += 1
             offset += client_bet_size
             bets.append(client_bet)
