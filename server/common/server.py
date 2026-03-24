@@ -5,7 +5,7 @@ from common.server_service import ServerService
 class Server:
     def __init__(self, port, listen_backlog, total_agencies):
         self.connection = ServerConnection(port, listen_backlog)
-        server_service = ServerService()
+        server_service = ServerService(total_agencies)
         server_controller = ServerController(server_service)
         self.server_router = ServerRouter(server_controller)
 

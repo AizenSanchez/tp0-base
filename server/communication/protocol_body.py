@@ -19,6 +19,9 @@ class ProtocolBody:
         if message_type == 4:
             bets = ProtocolBody.deserialize_batch_bets(bytes)
             return ProtocolBody(bets)   
+        if message_type == 5:
+            agency_id = int.from_bytes(bytes[0:1], byteorder='big')
+            return ProtocolBody(agency_id)
         logging.error(f"action: deserialize_protocol_body | result: failure | message_type: {message_type}")
 
     def deserialize_client_bet(bytes, agency_id) -> Bet:
@@ -67,13 +70,14 @@ class ProtocolBody:
         for bet in self.data:
             client_bet_bytes = self._serialize_client_bet(bet)
             bytesToSend += len(client_bet_bytes).to_bytes(1, byteorder='big') + client_bet_bytes
+        return bytesToSend
     
     def _serialize_client_bet(self, bet: Bet) -> bytes:
         bytesToSend = self._serialize_string(bet.first_name)
         bytesToSend += self._serialize_string(bet.last_name)
         bytesToSend += self._serialize_string(bet.document)
-        bytesToSend += self._serialize_string(bet.birthdate)
-        bytesToSend += self._serialize_string(bet.number)
+        bytesToSend += self._serialize_string(bet.birthdate.strftime("%Y-%m-%d"))
+        bytesToSend += self._serialize_string(str(bet.number))
         return bytesToSend
 
     def _serialize_string(self, string: str) -> bytes:

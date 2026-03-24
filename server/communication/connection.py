@@ -20,7 +20,9 @@ class ServerConnection:
         bytes_sent = client_socket.send(bytes_to_send)
         if bytes_sent != len(bytes_to_send):
             logging.error(f"action: send_message | result: failure | reason: short write | expected_size: {len(bytes_to_send)} | sent_size: {bytes_sent}")
+        address = client_socket.getpeername()
         client_socket.close()
+        self.clients_sockets.pop(address, None)
 
     
     def receive(self) -> tuple[ProtocolFrame, socket.socket]:

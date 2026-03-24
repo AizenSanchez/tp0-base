@@ -12,8 +12,9 @@ class ProtocolFrame:
         return ProtocolFrame(header, body)
     
     def serialize(self) -> bytes:
-        header_bytes =self.header.serialize()
         body_bytes = self.body.serialize(self.header.GetMessageType())
+        self.header.message_size = len(body_bytes)
+        header_bytes = self.header.serialize()
         return header_bytes + body_bytes
     
     def NewProtocolFrameError():
