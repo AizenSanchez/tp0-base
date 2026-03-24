@@ -33,3 +33,30 @@ func SerializeClient(client common.Client) []byte {
 	result = append(result, clientSerialized...)
 	return result
 }
+
+func DeserializeClientBet(bytes []byte) (common.ClientBet, error) {
+	offset := 1
+	name, size := DeserializeString(bytes[offset:])
+	offset += size
+	lastName, size := DeserializeString(bytes[offset:])
+	offset += size
+	dni, size := DeserializeString(bytes[offset:])
+	offset += size
+	birthDate, size := DeserializeString(bytes[offset:])
+	offset += size
+	number, size := DeserializeString(bytes[offset:])
+	offset += size
+
+	clientConfig := common.NewClientConfig(name, lastName, dni, birthDate, number)
+	clientBet, err := common.NewClientBet(clientConfig)
+	if err != nil {
+		return common.ClientBet{}, err
+	}
+	return clientBet, nil
+}
+
+func DeserializeString(bytes []byte) (string, int) {
+	strSize := int(bytes[0])
+	str := string(bytes[1 : 1+strSize])
+	return str, 1 + strSize
+}

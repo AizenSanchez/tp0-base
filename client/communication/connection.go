@@ -12,7 +12,7 @@ type Connection struct {
 	conn net.Conn
 }
 
-func NewConnection(serverAddress string, clientId string) (Connection, error) {
+func NewConnection(serverAddress string, clientId int) (Connection, error) {
 	conn, err := net.Dial("tcp", serverAddress)
 	if err != nil {
 		log.Criticalf(
