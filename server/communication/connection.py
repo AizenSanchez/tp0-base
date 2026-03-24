@@ -17,7 +17,6 @@ class ServerConnection:
         try:
             bytes_sent = client_socket.send(bytes_to_send)
         except BrokenPipeError:
-            logging.info("action: send_message | result: disconnected | reason: broken_pipe")
             return False
         except OSError as e:
             logging.error(f"action: send_message | result: failure | reason: os_error | error: {e}")
@@ -36,7 +35,6 @@ class ServerConnection:
     def receive_from(self, client_socket: socket.socket) -> tuple:
         header_bytes = client_socket.recv(HEADER_SIZE)
         if len(header_bytes) == 0:
-            logging.info("action: receive_message | result: disconnected | reason: client_closed")
             return None, None
         if len(header_bytes) < HEADER_SIZE:
             logging.error(f"action: receive_message | result: failure | reason: short read for header | expected_size: {HEADER_SIZE} | received_size: {len(header_bytes)}")
