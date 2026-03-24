@@ -14,10 +14,10 @@ const (
 var log = logging.MustGetLogger("log")
 
 type AgencyClient struct {
-	id               string
-	batch            BatchBuilder
-	serverConnection communication.Connection
-	stopChannel      chan struct{}
+	id            string
+	batch         BatchBuilder
+	serverAddress string
+	stopChannel   chan struct{}
 }
 
 func NewAgencyClient(id string, batchSize int, serverAddress string, stopChannel chan struct{}) (AgencyClient, error) {
@@ -25,15 +25,11 @@ func NewAgencyClient(id string, batchSize int, serverAddress string, stopChannel
 	if err != nil {
 		return AgencyClient{}, err
 	}
-	serverConnection, err := communication.NewConnection(serverAddress, id)
-	if err != nil {
-		return AgencyClient{}, err
-	}
 	return AgencyClient{
-		id:               id,
-		batch:            batch,
-		serverConnection: serverConnection,
-		stopChannel:      stopChannel,
+		id:            id,
+		batch:         batch,
+		serverAddress: serverAddress,
+		stopChannel:   stopChannel,
 	}, nil
 }
 
@@ -41,7 +37,7 @@ func (agencyClient *AgencyClient) RegisterBets() error {
 	for {
 		select {
 		case <-agencyClient.stopChannel:
-			agencyClient.CloseConnection()
+			log.Infof("action: stop_registering_bets | result: success")
 			return nil
 		default:
 		}
@@ -52,12 +48,16 @@ func (agencyClient *AgencyClient) RegisterBets() error {
 		if len(batch) == 0 {
 			break
 		}
-		protocolFrame := communication.NewProtocolFrameRequestRegisterBets(batch)
-		err = agencyClient.serverConnection.SendMessage(protocolFrame)
+		serverConnection, err := communication.NewConnection(agencyClient.serverAddress, agencyClient.id)
 		if err != nil {
 			return err
 		}
-		protocolFrameResponse, err := agencyClient.serverConnection.ReceiveMessage()
+		protocolFrame := communication.NewProtocolFrameRequestRegisterBets(batch)
+		err = serverConnection.SendMessage(protocolFrame)
+		if err != nil {
+			return err
+		}
+		protocolFrameResponse, err := serverConnection.ReceiveMessage()
 		if err != nil {
 			return err
 		}
@@ -70,11 +70,8 @@ func (agencyClient *AgencyClient) RegisterBets() error {
 			log.Infof("action: apuesta_enviada | result: fail | cantidad: %v",
 				batchSize)
 		}
-	}
-	agencyClient.CloseConnection()
-	return nil
-}
 
-func (agencyClient *AgencyClient) CloseConnection() error {
-	return agencyClient.serverConnection.Close()
+		serverConnection.Close()
+	}
+	return nil
 }
