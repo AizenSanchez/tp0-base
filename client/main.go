@@ -109,10 +109,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := agencyClient.RegisterBets(); err != nil {
-		log.Criticalf("%s", err)
-		os.Exit(1)
-	}
-
-	agencyClient.AskForWinners()
+	agencyClient.Work()
 }
