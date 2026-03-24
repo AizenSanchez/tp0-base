@@ -1,6 +1,6 @@
 # TP0 - Sistemas Distribuidos - Aizen Sanchez 110944
 
-## Ejercicio 6 - Procesamiento por batchs
+## Ejercicio 7 - Notificacion de fin y consulta de ganadores
 
 ## Ejecucion
 
@@ -24,10 +24,6 @@ make docker-compose-logs
 make docker-compose-down
 ```
 
-### Objetivo
-
-Se modifico el cliente para enviar varias apuestas en una sola consulta (batch/chunk),
-
 ### Protocolo de comunicacion
 
 Se usa un protocolo binario propio con header fijo y body variable.
@@ -45,15 +41,19 @@ El uso de 2 bytes para `messageSize` permite payloads de hasta 65535 bytes, sufi
 
 - `1`: request de apuesta individual
 - `4`: request de batch de apuestas
+- `5`: request de consulta de ganadores
 - `2`: respuesta OK del servidor
 - `3`: respuesta de error del servidor
+- `6`: respuesta con ganadores disponibles
+- `7`: respuesta de espera (sorteo aun no habilitado)
 
 #### Body para batch
 
 Formato general:
 
-1. `batch_size` (1 byte)
-2. Repetido `batch_size` veces:
+1. `agency_id` (1 byte)
+2. `batch_size` (1 byte)
+3. Repetido `batch_size` veces:
    - `client_bet_size` (1 byte)
    - `client_bet` serializado
 
@@ -64,18 +64,19 @@ Cada `client_bet` incluye:
 3. `number_size` (1 byte)
 4. `number` (string)
 
-### Flujo de procesamiento
+#### Body para consulta de ganadores (`messageType = 5`)
 
-1. El cliente abre el CSV de su agencia.
-2. Agrupa apuestas hasta alcanzar:
-   - `batch.maxAmount`, o
-   - limite de 8000 bytes.
-3. Envia el batch al servidor (`messageType = 4`).
-4. El servidor deserializa y procesa todas las apuestas del batch.
-5. Si todas se procesan correctamente, responde `messageType = 2` y loguea:
+- `agency_id` (1 byte)
 
-```text
-action: apuesta_recibida | result: success | cantidad: <cantidad_de_apuestas>
-```
+#### Body para respuesta con ganadores (`messageType = 6`)
 
-6. Si alguna falla, responde `messageType = 3` y loguea fallo del batch.
+Formato general:
+
+1. `winners_count` (1 byte)
+2. Repetido `winners_count` veces:
+   - `client_bet_size` (1 byte)
+   - datos serializados del ganador (`name`, `lastname`, `dni`, `birthdate`, `number`)
+
+#### Body para respuesta de espera (`messageType = 7`)
+
+- vacio
