@@ -2,8 +2,6 @@ from .protocol_frame import ProtocolFrame
 from .protocol_header import ProtocolHeader
 import logging
 import socket
-import sys
-import signal
 
 HEADER_SIZE = 3
 
@@ -14,12 +12,20 @@ class ServerConnection:
         self.socket.listen(listen_backlog)
         self.clients_sockets = {}
 
-    def send_to(self, protocol_frame: ProtocolFrame, client_socket: socket.socket) -> socket.socket:
+    def send_to(self, protocol_frame: ProtocolFrame, client_socket: socket.socket) -> bool:
         bytes_to_send = protocol_frame.serialize()
-        bytes_sent = client_socket.send(bytes_to_send)
+        try:
+            bytes_sent = client_socket.send(bytes_to_send)
+        except BrokenPipeError:
+            logging.info("action: send_message | result: disconnected | reason: broken_pipe")
+            return False
+        except OSError as e:
+            logging.error(f"action: send_message | result: failure | reason: os_error | error: {e}")
+            return False
         if bytes_sent != len(bytes_to_send):
             logging.error(f"action: send_message | result: failure | reason: short write | expected_size: {len(bytes_to_send)} | sent_size: {bytes_sent}")
-        return client_socket
+            return False
+        return True
 
     def accept_client(self)-> socket.socket:
         client_socket, addr = self.socket.accept()
@@ -27,16 +33,19 @@ class ServerConnection:
         logging.info(f"action: accept_connection | result: success | ip: {addr[0]}")
         return client_socket
     
-    def receive_from(self, client_socket: socket.socket) -> tuple[ProtocolFrame, socket.socket]:
+    def receive_from(self, client_socket: socket.socket) -> tuple:
         header_bytes = client_socket.recv(HEADER_SIZE)
+        if len(header_bytes) == 0:
+            logging.info("action: receive_message | result: disconnected | reason: client_closed")
+            return None, None
         if len(header_bytes) < HEADER_SIZE:
             logging.error(f"action: receive_message | result: failure | reason: short read for header | expected_size: {HEADER_SIZE} | received_size: {len(header_bytes)}")
-            return ProtocolFrame.NewProtocolFrameError(), client_socket
+            return None, None
         header = ProtocolHeader.ProtocolHeaderFromBytes(header_bytes)
         body_bytes = client_socket.recv(header.GetMessageSize())
         if len(body_bytes) < header.GetMessageSize():
             logging.error(f"action: receive_message | result: failure | reason: short read for body | expected_size: {header.GetMessageSize()} | received_size: {len(body_bytes)}")
-            return ProtocolFrame.NewProtocolFrameError(), client_socket
+            return None, None
         return ProtocolFrame.ProtocolFrameFromBytes(header_bytes + body_bytes), client_socket
     
     def close(self):

@@ -29,8 +29,14 @@ class Server:
     def _handle_client(self, client_socket):
         while client_socket:
             protocol_frame, client_socket = self.connection.receive_from(client_socket)
+            if not protocol_frame or not client_socket:
+                break
             response_frame = self.server_router.route(protocol_frame)
-            self.connection.send_to(response_frame, client_socket)
+            if not self.connection.send_to(response_frame, client_socket):
+                break
+
+        if client_socket:
+            client_socket.close()
 
     def _graceful_shutdown(self, signum, frame):
         self.connection.close()
