@@ -23,9 +23,7 @@ class ServerService:
     
     def get_winners(self, agency_id: int) -> list[Bet]:
         winners = []
-        logging.info(f"action: ask_for_winners | result: waiting | agency_id: {agency_id}")
         self.agencies_barrier.wait()
-        logging.info(f"action: ask_for_winners | result: proceeding | agency_id: {agency_id}")
         self.bet_file_lock.acquire()
         for bet in load_bets():
             if bet.agency == agency_id and has_won(bet):
