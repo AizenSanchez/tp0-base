@@ -61,6 +61,7 @@ func (agencyClient *AgencyClient) RegisterBets() error {
 		}
 		bodyBytes := make([]byte, 0)
 		bodyBytes = append(bodyBytes, byte(agencyClient.id))
+		bodyBytes = append(bodyBytes, batch...)
 		protocolFrame := communication.NewProtocolFrameRequestRegisterBets(bodyBytes)
 		err = serverConnection.SendMessage(protocolFrame)
 		if err != nil {

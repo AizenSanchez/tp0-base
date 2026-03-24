@@ -35,7 +35,7 @@ func SerializeClient(client common.Client) []byte {
 }
 
 func DeserializeClientBet(bytes []byte) (common.ClientBet, error) {
-	offset := 1
+	offset := 0
 	name, size := DeserializeString(bytes[offset:])
 	offset += size
 	lastName, size := DeserializeString(bytes[offset:])

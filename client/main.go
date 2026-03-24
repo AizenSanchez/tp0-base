@@ -113,4 +113,6 @@ func main() {
 		log.Criticalf("%s", err)
 		os.Exit(1)
 	}
+
+	agencyClient.AskForWinners()
 }
