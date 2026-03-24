@@ -1,104 +1,81 @@
 # TP0 - Sistemas Distribuidos - Aizen Sanchez 110944
 
-## Ejercicio 5: Registro de apuestas de quiniela
+## Ejercicio 6 - Procesamiento por batchs
 
-### Objetivo
+## Ejecucion
 
-Adaptar cliente y servidor al nuevo caso de uso de quiniela:
+Para ejecutar cualquier ejercicio usando Docker Compose:
 
-- El cliente emula una agencia que envia una apuesta.
-- El servidor emula la central que recibe y persiste apuestas.
-
-### Datos de apuesta
-
-Cada cliente envia estos campos por variables de entorno:
-
-- NOMBRE
-- APELLIDO
-- DNI
-- NACIMIENTO
-- NUMERO
-
-Tambien se utiliza CLI_ID para identificar la agencia emisora.
-
-### Ejecucion
-
-1. Generar compose con 5 clientes:
-
-```bash
-./generar-compose.sh docker-compose-dev.yaml 5
-```
-
-2. Levantar servicios:
+1. Levantar servicios:
 
 ```bash
 make docker-compose-up
 ```
 
-3. Ver logs:
+2. Ver logs:
 
 ```bash
 make docker-compose-logs
 ```
 
-### Comportamiento implementado
+3. Bajar servicios:
 
-Cliente:
-
-- Lee configuracion desde `config.yaml` y variables de entorno.
-- Construye el modelo de dominio de apuesta (cliente + numero).
-- Valida formato de DNI, fecha de nacimiento y numero apostado.
-- Serializa y envia la apuesta al servidor por socket TCP.
-- Espera respuesta de confirmacion.
-- Loguea resultado de envio:
-
-```text
-action: apuesta_enviada | result: success | dni: ${DNI} | numero: ${NUMERO}
+```bash
+make docker-compose-down
 ```
 
-Servidor:
+### Objetivo
 
-- Acepta conexiones TCP.
-- Recibe y deserializa la apuesta enviada por el cliente.
-- Enruta por tipo de mensaje (registro de apuesta).
-- Persiste la apuesta mediante la capa de servicio (`store_bets(...)` en la implementacion actual).
-- Loguea persistencia:
+Se modifico el cliente para enviar varias apuestas en una sola consulta (batch/chunk),
+
+### Protocolo de comunicacion
+
+Se usa un protocolo binario propio con header fijo y body variable.
+
+#### Header
+
+- `messageType` (1 byte)
+- `messageSize` (2 bytes, big-endian)
+
+Total header: 3 bytes.
+
+El uso de 2 bytes para `messageSize` permite payloads de hasta 65535 bytes, suficiente para el objetivo de 8 kB.
+
+#### Tipos de mensaje
+
+- `1`: request de apuesta individual
+- `4`: request de batch de apuestas
+- `2`: respuesta OK del servidor
+- `3`: respuesta de error del servidor
+
+#### Body para batch
+
+Formato general:
+
+1. `batch_size` (1 byte)
+2. Repetido `batch_size` veces:
+   - `client_bet_size` (1 byte)
+   - `client_bet` serializado
+
+Cada `client_bet` incluye:
+
+1. `client_size` (1 byte)
+2. cliente serializado (`name`, `lastname`, `dni`, `birthdate`, cada uno prefijado por longitud en 1 byte)
+3. `number_size` (1 byte)
+4. `number` (string)
+
+### Flujo de procesamiento
+
+1. El cliente abre el CSV de su agencia.
+2. Agrupa apuestas hasta alcanzar:
+   - `batch.maxAmount`, o
+   - limite de 8000 bytes.
+3. Envia el batch al servidor (`messageType = 4`).
+4. El servidor deserializa y procesa todas las apuestas del batch.
+5. Si todas se procesan correctamente, responde `messageType = 2` y loguea:
 
 ```text
-action: apuesta_almacenada | result: success | dni: ${DNI} | numero: ${NUMERO}
+action: apuesta_recibida | result: success | cantidad: <cantidad_de_apuestas>
 ```
 
-### Protocolo de comunicacion implementado
-
-Se implemento un protocolo binario simple con dos partes:
-
-1. Header (2 bytes)
-
-- `message_type` (1 byte)
-- `message_size` (1 byte)
-
-2. Body (tamano variable)
-
-- Request de alta de apuesta: `ClienBet`: datos del cliente + numero apostado. Donde los datos del cliente están almacenado en el tipo `Client`
-- Response del servidor: solo header, sin body.
-
-Tipos de mensaje usados:
-
-- `1`: request registrar apuesta
-- `2`: respuesta success
-- `3`: respuesta error
-
-### Serializacion
-
-La serializacion se hace por campos con prefijo de longitud:
-
-- Cada string y estructura se codifica como: `len(1 byte) + contenido`.
-- El body se compone de estructuras anidadas serializadas.
-- El header ajusta `message_size` con el largo final del body.
-
-### Sockets y manejo de errores
-
-- Se usa TCP para intercambio cliente-servidor.
-- Se valida short write comparando bytes enviados vs bytes esperados.
-- Se valida short read en header y body comparando tamanos recibidos.
-- Se registran errores de conexion, envio, recepcion y deserializacion.
+6. Si alguna falla, responde `messageType = 3` y loguea fallo del batch.
