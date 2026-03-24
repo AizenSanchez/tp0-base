@@ -110,7 +110,6 @@ func (agencyClient *AgencyClient) AskForWinners() {
 			return
 		}
 		if !results_ready {
-			log.Infof("action: ask_for_winners | result: wait | agency_id: %v", agencyClient.id)
 			serverConnection.Close()
 			continue
 		}
@@ -122,6 +121,9 @@ func (agencyClient *AgencyClient) AskForWinners() {
 }
 
 func (agencyClient *AgencyClient) showWinners(winners []common.ClientBet) {
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v",
+		len(winners),
+	)
 	for _, winner := range winners {
 		log.Infof("action: winner | result: success | client_name: %v | client_last_name: %v | client_dni: %v | client_birth_date: %v | bet_number: %v",
 			winner.GetClient().GetName(),

@@ -24,6 +24,7 @@ class ServerRouter:
             if self.server_controller.ask_for_winners(protocol_frame.body.data):
                 logging.info(f"action: ask_for_winners | result: success | agency_id: {protocol_frame.body.data}")
                 winners = self.server_controller.get_winners(protocol_frame.body.data)
+                logging.info(f"action: sorteo | result: success")
                 return ProtocolFrame.NewProtocolFrameAskForWinnersSuccess(winners)
             return ProtocolFrame.NewProtocolFrameAskForWinnersWait()
         else:
