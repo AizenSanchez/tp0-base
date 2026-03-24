@@ -20,6 +20,12 @@ class ServerRouter:
                 logging.error(f"action: apuesta_recibida | result: failure | cantudad: {len(protocol_frame.body.data)}")
                 return ProtocolFrame.NewProtocolFrameError()
             logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets)}")
+        elif message_type == 5:
+            if self.server_controller.ask_for_winners(protocol_frame.body.data):
+                logging.info(f"action: ask_for_winners | result: success | agency_id: {protocol_frame.body.data}")
+                winners = self.server_controller.get_winners(protocol_frame.body.data)
+                return ProtocolFrame.NewProtocolFrameAskForWinnersSuccess(winners)
+            return ProtocolFrame.NewProtocolFrameAskForWinnersWait()
         else:
             logging.error(f"action: mensaje_recibido | result: failure | message_type: {message_type}")
             return ProtocolFrame.NewProtocolFrameError()
