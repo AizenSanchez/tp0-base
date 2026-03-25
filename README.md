@@ -1,6 +1,6 @@
 # TP0 - Sistemas Distribuidos - Aizen Sanchez 110944
 
-## Ejercicio 7 - Notificacion de fin y consulta de ganadores
+## Ejercicio 8 - Servidor concurrente
 
 ## Ejecucion
 
@@ -80,3 +80,20 @@ Formato general:
 #### Body para respuesta de espera (`messageType = 7`)
 
 - vacio
+
+### Implementacion
+
+Para este ejercicio se modifico el servidor para aceptar conexiones y procesar mensajes en paralelo.
+
+#### Modelo de concurrencia
+
+- El servidor principal acepta conexiones en un loop y crea un hilo por cliente.
+- Cada hilo ejecuta el ciclo de recepcion, ruteo y respuesta para su conexion.
+- De esta forma, multiples clientes pueden enviar mensajes al mismo tiempo sin bloquear entre si en la etapa de red.
+
+#### Sincronizacion de estado compartido
+
+Se utilizaron primitivas de `threading` para evitar condiciones de carrera:
+
+- `threading.Lock` para proteger acceso a almacenamiento de apuestas (`store_bets` y lectura para calculo de ganadores).
+- `threading.Barrier` para sincronizar la consulta de ganadores entre agencias, de modo que el calculo se habilite cuando se alcanza el total configurado.
